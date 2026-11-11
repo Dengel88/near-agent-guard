@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guard Console</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M16 2 4 7v8c0 7.5 5.1 13.4 12 15 6.9-1.6 12-7.5 12-15V7z' fill='%2300ec97'/></svg>">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07090d;--panel:#0e1218;--panel2:#131923;--line:#1f2733;--text:#e8edf3;--muted:#8a97a8;--dim:#5d6878;
+--green:#00ec97;--green-bg:rgba(0,236,151,.1);--amber:#ffb547;--amber-bg:rgba(255,181,71,.1);--red:#ff5468;--red-bg:rgba(255,84,104,.1);--blue:#6aa8ff;
+--mono:"JetBrains Mono",ui-monospace,monospace;--sans:Inter,system-ui,sans-serif;--r:14px}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:14.5px/1.5 var(--sans)}
+a{color:inherit}
+.wrap{max-width:1320px;margin:0 auto;padding:0 20px 50px}
+header{display:flex;align-items:center;gap:16px;padding:18px 0;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:19px;text-decoration:none}
+.logo svg{width:28px;height:28px}
+.logo small{color:var(--muted);font-weight:500;font-size:14px}
+.nav{margin-left:auto;display:flex;gap:14px;align-items:center}
+.nav a{color:var(--muted);text-decoration:none;font-weight:500}
+label.tg{color:var(--muted);font-size:13px;display:flex;gap:6px;align-items:center;cursor:pointer}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.card h2{margin:0 0 12px;font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+.big{font:800 30px var(--mono)}
+.meter{height:10px;background:#0a0d12;border-radius:99px;overflow:hidden;margin:10px 0 6px}
+.meter i{display:block;height:100%;background:var(--green);border-radius:99px}
+.muted{color:var(--muted)} .mono{font-family:var(--mono)}
+.kv{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:13.5px}
+.kv span:nth-child(odd){color:var(--muted)} .kv span:nth-child(even){font-family:var(--mono)}
+.ok{color:var(--green)} .bad{color:var(--red)}
+.pend{display:flex;flex-direction:column;gap:10px}
+.pitem{background:var(--panel2);border:1px solid rgba(255,181,71,.35);border-radius:12px;padding:12px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.pitem.flash{box-shadow:0 0 0 2px var(--amber)}
+.pitem .amt{font:700 18px var(--mono)}
+.pitem .why{color:var(--amber);font-size:13px}
+.btn{appearance:none;border:0;border-radius:9px;padding:9px 14px;font:600 13.5px var(--sans);cursor:pointer;background:var(--green);color:#03140c}
+.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;color:var(--muted);font-weight:500;font-size:12px;text-transform:uppercase;letter-spacing:.08em;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr.clickable{cursor:pointer} tr.clickable:hover td{background:var(--panel2)}
+.st{font:600 11px var(--mono);text-transform:uppercase;padding:3px 7px;border-radius:6px;white-space:nowrap}
+.st-executed{background:var(--green-bg);color:var(--green)} .st-executing,.st-approved{background:rgba(106,168,255,.12);color:var(--blue)}
+.st-pending_approval{background:var(--amber-bg);color:var(--amber)} .st-blocked,.st-denied,.st-failed{background:var(--red-bg);color:var(--red)}
+.st-expired{background:#1a202a;color:var(--muted)}
+.chain{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.audit{font:12px/1.6 var(--mono);max-height:360px;overflow:auto}
+.audit div{display:grid;grid-template-columns:44px 110px 1fr;gap:10px;padding:5px 0;border-bottom:1px dashed var(--line)}
+.audit .h{color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.allow{display:flex;flex-direction:column;gap:6px}
+.allow>div{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:13px}
+.empty{color:var(--dim);padding:10px 0}
+.detail{background:#0a0d12;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:13px;margin:6px 0}
+.detail .c{display:flex;gap:8px;padding:2px 0}
+.c-pass{color:var(--green)} .c-hold{color:var(--amber)} .c-block{color:var(--red)}
+.two{display:grid;grid-template-columns:2fr 1fr;gap:14px}
+@media (max-width:1000px){.grid,.two{grid-template-columns:1fr}.hide-sm{display:none}.wrap{padding:0 16px 40px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <a class="logo" href="/"><svg viewBox="0 0 32 32"><path d="M16 2 4 7v8c0 7.5 5.1 13.4 12 15 6.9-1.6 12-7.5 12-15V7z" fill="#00ec97"/><path d="m11 16 3.5 3.5L21.5 12" stroke="#03140c" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>Agent Guard <small>owner console</small></a>
+  <nav class="nav"><label class="tg"><input type="checkbox" id="mine"> only my demo session</label><a href="/">Live demo</a><a href="/docs">API</a></nav>
+</header>
+
+<div class="grid">
+  <div class="card"><h2>Spent today <span id="agentname" class="mono"></span></h2><div class="big" id="spent">$0.00</div><div class="meter"><i id="meter" style="width:0"></i></div><div class="muted" id="budget"></div></div>
+  <div class="card"><h2>Policy</h2><div class="kv" id="policy"></div></div>
+  <div class="card"><h2>Audit chain <span id="auditok"></span></h2><div class="kv" id="auditkv"></div><p class="muted" style="font-size:12.5px;margin:10px 0 0">Each entry hashes the previous one. Editing or deleting any past decision breaks verification.</p></div>
+</div>
+
+<div class="two">
+  <div>
+    <div class="card" style="margin-bottom:14px"><h2>Waiting for you <span id="pcount" class="mono"></span></h2><div class="pend" id="pending"></div></div>
+    <div class="card"><h2>Payments</h2><table><thead><tr><th>Status</th><th>Amount</th><th>Recipient</th><th class="hide-sm">Purpose</th><th class="hide-sm">Risk</th></tr></thead><tbody id="rows"></tbody></table></div>
+  </div>
+  <div>
+    <div class="card" style="margin-bottom:14px"><h2>Allowlisted payees</h2><div class="allow" id="allow"></div></div>
+    <div class="card"><h2>Audit log</h2><div class="audit" id="audit"></div></div>
+  </div>
+</div>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const short = a => a && a.length > 22 ? a.slice(0,10) + "…" + a.slice(-8) : (a || "");
+let TOKEN = new URLSearchParams(location.search).get("token") || "";
+try{ TOKEN = TOKEN || localStorage.getItem("guard_owner") || ""; if(TOKEN) localStorage.setItem("guard_owner", TOKEN) }catch(_){}
+let open = location.hash.slice(1);
+try{ const m = localStorage.getItem("guard_mine"); $("#mine").checked = m ? m === "1" : !!localStorage.getItem("guard_ledger") }catch(_){}
+$("#mine").onchange = () => { try{ localStorage.setItem("guard_mine", $("#mine").checked ? "1" : "0") }catch(_){}; load() };
+
+async function api(path, body){
+  const r = await fetch(path, {method: body ? "POST" : "GET", headers: {"content-type":"application/json", "x-owner-token": TOKEN}, body: body ? JSON.stringify(body) : undefined});
+  if(r.status === 401){
+    TOKEN = prompt("Owner token") || ""; try{ localStorage.setItem("guard_owner", TOKEN) }catch(_){}
+    return api(path, body);
+  }
+  const j = await r.json(); if(!r.ok) throw new Error(j.detail || j.error); return j;
+}
+function ledger(){ try{ return $("#mine").checked ? (localStorage.getItem("guard_ledger") || "") : "" }catch(_){ return "" } }
+
+async function load(){
+  const L = ledger(), q = L ? "ledger=" + encodeURIComponent(L) : "";
+  const [sum, pays, aud] = await Promise.all([api("/api/owner/summary?" + q), api("/api/owner/payments?limit=100&" + q), api("/api/owner/audit?limit=80")]);
+  const a = sum.agents[0], pol = a.policy;
+  $("#agentname").textContent = a.id;
+  $("#spent").textContent = "$" + a.spent_today_usd.toFixed(2);
+  $("#meter").style.width = Math.min(100, a.spent_today_usd / pol.daily_limit_usd * 100) + "%";
+  $("#budget").textContent = `of $${pol.daily_limit_usd} daily budget · ${a.payments_today} committed payments` + (L ? " · this demo session" : " · all sessions");
+  $("#policy").innerHTML = [["per payment", "≤ $" + pol.per_tx_limit_usd], ["auto-approve", "≤ $" + pol.approval_above_usd], ["per hour", pol.max_tx_per_hour + " payments"],
+    ["chains", pol.allowed_chains.join(", ")], ["unknown payee", pol.unknown_recipient], ["AI hold / block", pol.ai_hold_score + " / " + pol.ai_block_score], ["hold expires", pol.approval_ttl_minutes + " min"]]
+    .map(([k,v]) => `<span>${k}</span><span>${esc(v)}</span>`).join("");
+  $("#allow").innerHTML = a.allowlist.map(p => `<div><b>${esc(p.name)}</b><div class="chain">${esc(p.chain)}:${esc(short(p.address))} · ${esc(p.token)}</div></div>`).join("");
+  const v = aud.verify;
+  $("#auditok").innerHTML = v.ok ? '<span class="ok">✓ verified</span>' : `<span class="bad">✕ broken at #${v.broken_at}</span>`;
+  $("#auditkv").innerHTML = `<span>entries</span><span>${v.entries}</span><span>head</span><span title="${esc(v.head)}">${esc((v.head||"").slice(0,16))}…</span><span>storage</span><span>${esc(sum.health.storage)}</span><span>settlement</span><span>${esc(sum.health.execution)}</span>`;
+  $("#audit").innerHTML = aud.entries.map(e => `<div><span class="muted">#${e.seq}</span><span>${esc(e.event)}</span><span class="h" title="${esc(e.hash)}">${esc(e.payment_id)} · ${esc(e.hash.slice(0,12))}</span></div>`).join("") || '<div class="empty">No entries yet.</div>';
+
+  const pend = pays.filter(p => p.status === "pending_approval");
+  $("#pcount").textContent = pend.length || "";
+  $("#pending").innerHTML = pend.map(p => `<div class="pitem ${p.id === open ? "flash" : ""}" id="${p.id}"><div>
+      <div class="amt">$${p.amount_usd.toFixed(2)} <span class="chain">${esc(p.recipient.token)} → ${esc(p.recipient.chain)}:${esc(short(p.recipient.address))}</span></div>
+      <div class="muted">${esc(p.purpose)}</div><div class="why">${esc((p.reasons||[]).join(" · "))}</div></div>
+      <div style="display:flex;gap:6px"><button class="btn" onclick="decide('${p.id}','approve')">Approve</button><button class="btn ghost" onclick="decide('${p.id}','deny')">Deny</button></div></div>`).join("") || '<div class="empty">Nothing is waiting. The agent is within policy.</div>';
+
+  $("#rows").innerHTML = pays.map(p => `<tr class="clickable" onclick="toggle('${p.id}')"><td><span class="st st-${p.status}">${p.status.replace("_"," ")}</span></td>
+    <td class="mono">$${p.amount_usd.toFixed(2)}</td><td><div>${esc(p.recipient.payee || "unknown")}</div><div class="chain">${esc(p.recipient.chain)}:${esc(short(p.recipient.address))}</div></td>
+    <td class="hide-sm">${esc(p.purpose)}</td><td class="hide-sm mono">${p.ai ? p.ai.risk_score : "–"}</td></tr>
+    <tr id="d-${p.id}" style="display:${p.id === open ? "" : "none"}"><td colspan="5">${detail(p)}</td></tr>`).join("") || '<tr><td colspan="5" class="empty">No payments yet. Run a scenario in the <a href="/">live demo</a>.</td></tr>';
+}
+
+function detail(p){
+  const e = p.execution || {};
+  const tx = e.tx_hash ? (e.simulated ? `${esc(e.tx_hash)} (simulated)` : `<a href="https://nearblocks.io/txns/${esc(e.tx_hash)}" target="_blank">${esc(e.tx_hash)}</a>`) : "";
+  return `<div class="detail">${p.checks.map(c => `<div class="c"><span class="c-${c.result}">${c.result === "pass" ? "✓" : c.result === "hold" ? "❚❚" : "✕"}</span><span><b>${esc(c.label)}</b> <span class="muted">${esc(c.detail)}</span></span></div>`).join("")}
+    ${p.ai ? `<div class="c" style="margin-top:6px"><span class="muted">AI</span><span>${esc(p.ai.summary)} <span class="chain">${esc((p.ai.flags||[]).join(", "))}</span></span></div>` : ""}
+    ${tx ? `<div class="c"><span class="muted">tx</span><span class="mono">${tx}</span></div>` : ""}
+    ${e.deposit_address ? `<div class="c"><span class="muted">1Click</span><span class="mono">${esc(e.deposit_address)} · ${esc(e.amount_in)} USDC in · ${esc(e.oneclick_status || "")}</span></div>` : ""}
+    ${e.error ? `<div class="c c-block">${esc(e.error)}</div>` : ""}
+    <div class="c"><span class="muted">context</span><span class="muted" style="white-space:pre-wrap">${esc(p.context_preview)}</span></div></div>`;
+}
+function toggle(id){ const r = $("#d-" + id); r.style.display = r.style.display === "none" ? "" : "none" }
+async function decide(id, action){
+  try{ await api(`/api/owner/payments/${id}/${action}`, {}) }catch(err){ alert(err.message) }
+  load();
+}
+load(); setInterval(load, 5000);
+</script>
+</body>
+</html>

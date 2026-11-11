@@ -1,0 +1,9 @@
+# Runtime only. Test tooling lives in requirements-dev.txt.
+fastapi==0.162.0
+uvicorn==0.54.0
+pydantic==2.14.2
+httpx==0.28.1
+PyYAML==6.0.3
+python-dotenv==1.2.3
+PyNaCl==1.6.2
+base58==2.1.1
