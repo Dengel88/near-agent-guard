@@ -310,7 +310,11 @@ function renderExec(p){
   if(p.status === "pending_approval"){
     ex.innerHTML = `<div class="exec"><div style="margin-bottom:10px;color:var(--muted)">You are the owner in this demo. Approve or deny it here, or in the <a href="/console#${p.id}">console</a>.</div>
       <div class="actions"><button class="btn" id="ap">Approve &amp; pay</button><button class="btn ghost" id="dn">Deny</button></div></div>`;
-    $("#ap").onclick = () => decide(p.id, "approve");
+    $("#ap").onclick = () => {
+      const risky = (p.ai && p.ai.risk_score >= 40) || p.checks.some(c => c.id === "impersonation" && c.result !== "pass");
+      if(risky && !confirm("The Guard flagged this payment:\n\n" + (p.reasons || []).join("\n") + "\n\nSend $" + p.amount_usd.toFixed(2) + " anyway?")) return;
+      decide(p.id, "approve");
+    };
     $("#dn").onclick = () => decide(p.id, "deny");
     return;
   }

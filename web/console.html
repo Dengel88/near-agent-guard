@@ -121,7 +121,7 @@ async function load(){
 
   const pend = pays.filter(p => p.status === "pending_approval");
   $("#pcount").textContent = pend.length || "";
-  $("#pending").innerHTML = pend.map(p => `<div class="pitem ${p.id === open ? "flash" : ""}" id="${p.id}"><div>
+  $("#pending").innerHTML = pend.map(p => `<div class="pitem ${p.id === open ? "flash" : ""}" id="${p.id}" data-risky="${(p.ai && p.ai.risk_score >= 40) || p.checks.some(c => c.id === "impersonation") ? 1 : 0}"><div>
       <div class="amt">$${p.amount_usd.toFixed(2)} <span class="chain">${esc(p.recipient.token)} → ${esc(p.recipient.chain)}:${esc(short(p.recipient.address))}</span></div>
       <div class="muted">${esc(p.purpose)}</div><div class="why">${esc((p.reasons||[]).join(" · "))}</div></div>
       <div style="display:flex;gap:6px"><button class="btn" onclick="decide('${p.id}','approve')">Approve</button><button class="btn ghost" onclick="decide('${p.id}','deny')">Deny</button></div></div>`).join("") || '<div class="empty">Nothing is waiting. The agent is within policy.</div>';
@@ -144,6 +144,8 @@ function detail(p){
 }
 function toggle(id){ const r = $("#d-" + id); r.style.display = r.style.display === "none" ? "" : "none" }
 async function decide(id, action){
+  const el = document.getElementById(id);
+  if(action === "approve" && el && el.dataset.risky === "1" && !confirm("The Guard flagged this payment as risky. Send it anyway?")) return;
   try{ await api(`/api/owner/payments/${id}/${action}`, {}) }catch(err){ alert(err.message) }
   load();
 }
