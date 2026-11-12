@@ -103,6 +103,10 @@ agent ──(API key: can only ask)──► Agent Guard ──► policy ─►
 - The screener only sees the context the agent passes. The deterministic rules don't depend on it.
 - Prices are treated as USDC = $1.
 
+## Team
+
+Built by **Sam ([@Dengel88](https://github.com/Dengel88))**, SyNNdicate, together with Claude Code as an AI pair programmer. Sam owns the product, the treasury and every real-money decision; Claude wrote most of the code.
+
 ## Sibling project
 
 My other NEAR HACKATHON entry is **[AI-Shtat Pay](https://github.com/Dengel88/nearhackaton)**: an AI sales assistant that issues invoices in chat and gets paid in any token on any chain through NEAR Intents. The two projects are independent; Agent Guard is the safety layer you'd put in front of agents like it.
