@@ -186,6 +186,8 @@ class Store:
         if agent_id:
             sql += " AND agent_id = ?"
             args.append(agent_id)
+        else:  # game rounds are throwaway simulations; keep them out of the ledger view
+            sql += " AND agent_id NOT LIKE 'game~%'"
         if status:
             sql += " AND status = ?"
             args.append(status)

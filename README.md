@@ -24,6 +24,10 @@ The agent never holds a key. It gets an API key that can only **ask** for a paym
 
 ---
 
+## Play: Rob Bob
+
+**[near-agent-guard.vercel.app/play](https://near-agent-guard.vercel.app/play)**: write one email that tricks Bob, our naive AI accountant, into paying your wallet. Bob falls for almost anything; the Guard is the part you have to beat. The page shows Bob's tool call, every check, and whether you fooled the AI screener too (when you do, the deterministic rules still stop you, which is the point). Rounds are always simulated in a throwaway ledger, held rounds are auto-denied, never page the owner, and are rate-limited per IP. Bounty: get the Guard to *allow* a payment to an unknown wallet. Public counters: `GET /api/game/stats`.
+
 ## Run it (60 seconds, no keys needed)
 
 ```bash

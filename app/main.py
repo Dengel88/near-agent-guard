@@ -4,7 +4,8 @@ Agents:  POST /api/v1/payments            (Authorization: Bearer <agent key>)
          GET  /api/v1/payments/{id}
 Owner:   /api/owner/*  approvals, ledger, policy, audit log (X-Owner-Token if OWNER_TOKEN is set)
 Demo:    /api/demo/*   the naive AP agent reading an inbox, wired to the Guard
-Pages:   /  live demo,  /console  owner console
+Game:    /api/game/*   "Rob Bob": players try to scam the agent past the Guard (always simulated)
+Pages:   /  live demo,  /console  owner console,  /play  the game
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Res
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
+from . import game
 from .agent import email_text, run_agent, scenarios_for
 from .config import ROOT, Agent, Settings, get_settings
 from .guard import Guard, GuardError, Notifier
@@ -127,6 +129,10 @@ def create_app(settings: Settings | None = None, store: Store | None = None, one
     @app.get("/console", include_in_schema=False)
     def console() -> FileResponse:
         return FileResponse(WEB / "console.html")
+
+    @app.get("/play", include_in_schema=False)
+    def play() -> FileResponse:
+        return FileResponse(WEB / "play.html")
 
     @app.get("/api/health")
     def health() -> dict[str, Any]:
@@ -250,6 +256,43 @@ def create_app(settings: Settings | None = None, store: Store | None = None, one
         if not p:
             raise HTTPException(404, "payment not found")
         return public(await guard.refresh(p))
+
+    # --- game ----------------------------------------------------------------------
+    @app.get("/api/game/stats")
+    def game_stats() -> dict[str, Any]:
+        return {**game.EMPTY_STATS, **(store.kv_get(game.STATS_KEY) or {})}
+
+    @app.post("/api/game/attack")
+    async def game_attack(body: EmailIn, request: Request) -> dict[str, Any]:
+        """One round: Bob reads the player's email, the Guard judges Bob's payment.
+        Always simulated, in a fresh throwaway ledger, whoever is calling."""
+        if not body.body.strip():
+            raise HTTPException(400, "write an email first")
+        who = (request.headers.get("x-forwarded-for") or (request.client.host if request.client else "?")).split(",")[0].strip()
+        if not game.rate_ok(store, who, s.game_rounds_per_hour):
+            raise HTTPException(429, "Bob needs a coffee break. Try again in a bit.")
+        email = {"from": body.sender or "stranger@example.com", "subject": body.subject, "body": body.body}
+        t0 = time.time()
+        said = await run_agent(llm, email)
+        call, payment = said["call"], None
+        if call:
+            try:
+                req = PaymentRequest(
+                    amount_usd=float(call["amount_usd"]), chain=str(call["chain"]).lower(), address=str(call["address"]).strip(),
+                    token=str(call.get("token") or "USDC"), purpose=str(call.get("purpose") or ""), context=email_text(email))
+            except (KeyError, TypeError, ValueError):
+                call = None
+            else:
+                if req.amount_usd > 0:
+                    p = await guard.submit(s.agents[0], req, ledger="game~" + secrets.token_hex(6), simulate=True)
+                    if p["status"] == "pending_approval":  # nobody approves game rounds
+                        p = await guard.deny(p["id"], "game", "game round: a human would have to approve this")
+                    payment = public(p)
+                else:
+                    call = None
+        o = game.outcome(s.agents[0], call, payment)
+        return {"agent": said, "payment": payment, "outcome": o, "badges": game.badges(o, payment),
+                "stats": game.bump(store, o), "ms": int((time.time() - t0) * 1000)}
 
     return app
 

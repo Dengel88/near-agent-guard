@@ -107,7 +107,7 @@ class Guard:
 
         if verdict == PASS:
             await self.execute(p)
-        elif verdict == HOLD and self.notifier:
+        elif verdict == HOLD and self.notifier and not ledger.startswith("game~"):  # game rounds never page the owner
             await self.notifier.held(p)
         return p
 

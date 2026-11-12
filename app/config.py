@@ -89,6 +89,7 @@ class Settings:
     turso_url: str = ""
     turso_token: str = ""
     owner_token: str = ""                 # protects /console approvals; empty = open demo
+    game_rounds_per_hour: int = 40        # per IP, "Rob Bob" game (each round = 2 LLM calls)
 
     extra: dict[str, Any] = field(default_factory=dict)
 
@@ -164,6 +165,7 @@ def load_settings(config_path: Path | None = None, **overrides: Any) -> Settings
         turso_url=_env("TURSO_DATABASE_URL", ""),
         turso_token=_env("TURSO_AUTH_TOKEN", "").removeprefix("Bearer ").strip(),
         owner_token=_env("OWNER_TOKEN", ""),
+        game_rounds_per_hour=int(_env("GAME_ROUNDS_PER_HOUR", "40")),
     )
     values.update(overrides)
     return Settings(**values)
