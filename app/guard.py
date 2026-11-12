@@ -50,7 +50,8 @@ class Guard:
         self.notifier = notifier
 
     # --- intake ----------------------------------------------------------
-    async def submit(self, agent: Agent, req: PaymentRequest, ledger: str = "") -> dict[str, Any]:
+    async def submit(self, agent: Agent, req: PaymentRequest, ledger: str = "",
+                     simulate: bool | None = None) -> dict[str, Any]:
         """`ledger` scopes spending limits; the public demo gives each visitor
         its own sandbox ledger in simulated mode. Live mode uses the agent's."""
         ledger = ledger or agent.id
@@ -79,6 +80,8 @@ class Guard:
             "id": "pay_" + secrets.token_urlsafe(8).replace("-", "x").replace("_", "y"),
             "agent_id": agent.id,
             "ledger": ledger,
+            # simulated payments never touch the treasury, whatever the global mode
+            "simulated": self.s.execution_mode != "live" if simulate is None else bool(simulate or self.s.execution_mode != "live"),
             "agent_name": agent.name,
             "amount_usd": round(req.amount_usd, 2),
             "recipient": {"chain": req.chain, "address": req.address, "token": req.token.upper(),
@@ -150,7 +153,7 @@ class Guard:
         try:
             if r["chain"] == "near" and r["token"] == "USDC":
                 p["execution"] = {"route": "direct", "amount_units": str(units)}
-                tx = await self._transfer(r["address"], units, memo=f"agent-guard {p['id']}")
+                tx = await self._transfer(r["address"], units, memo=f"agent-guard {p['id']}", simulate=p.get("simulated", True))
                 p["execution"].update(tx)
                 p["status"] = "executed"
             else:
@@ -164,7 +167,7 @@ class Guard:
                     "amount_in": q["amountInFormatted"], "amount_out": q["amountOutFormatted"],
                     "time_estimate_s": q.get("timeEstimate"), "correlation_id": quote.get("correlationId"),
                 }
-                tx = await self._transfer(q["depositAddress"], amount_in, memo=f"agent-guard {p['id']}")
+                tx = await self._transfer(q["depositAddress"], amount_in, memo=f"agent-guard {p['id']}", simulate=p.get("simulated", True))
                 p["execution"].update(tx)
                 if isinstance(self.oneclick, MockOneClick):
                     await self.oneclick.submit_deposit(tx["tx_hash"], q["depositAddress"])
@@ -185,8 +188,8 @@ class Guard:
                     {k: v for k, v in p["execution"].items() if k in ("route", "tx_hash", "deposit_address", "amount_in", "simulated")})
         self.store.save_payment(p)
 
-    async def _transfer(self, receiver: str, units: int, memo: str) -> dict[str, Any]:
-        if self.s.execution_mode != "live":
+    async def _transfer(self, receiver: str, units: int, memo: str, simulate: bool = True) -> dict[str, Any]:
+        if simulate or self.s.execution_mode != "live":
             fake = secrets.token_hex(16)
             return {"tx_hash": "sim" + fake, "simulated": True, "from": self.s.treasury_account}
         if not self.treasury:

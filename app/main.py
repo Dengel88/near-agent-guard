@@ -29,6 +29,7 @@ from .store import Store
 
 WEB = ROOT / "web"
 SANDBOX_COOKIE = "guard_sandbox"
+PUBLIC_DEMO_KEY = "demo-agent-key"
 
 
 class PaymentIn(BaseModel):
@@ -85,18 +86,38 @@ def create_app(settings: Settings | None = None, store: Store | None = None, one
             raise HTTPException(401, "unknown agent key")
         return agent
 
-    def owner_auth(x_owner_token: str = Header(default=""), token: str = Query(default="")) -> None:
-        if s.owner_token and not secrets.compare_digest((x_owner_token or token).encode(), s.owner_token.encode()):
-            raise HTTPException(401, "owner token required")
+    def is_owner(request: Request) -> bool:
+        if not s.owner_token:
+            return True
+        given = request.headers.get("x-owner-token") or request.query_params.get("token") or ""
+        return secrets.compare_digest(given.encode(), s.owner_token.encode())
 
-    def ledger_for(agent: Agent, request: Request, response: Response) -> tuple[str, str]:
-        if s.execution_mode == "live":
-            return agent.id, ""
+    def sandbox(request: Request, response: Response) -> str:
         sid = request.cookies.get(SANDBOX_COOKIE, "")
         if not sid.isalnum() or len(sid) != 12:
             sid = secrets.token_hex(6)
             response.set_cookie(SANDBOX_COOKIE, sid, max_age=7 * 86400, samesite="lax", httponly=True)
-        return f"{agent.id}~{sid}", sid
+        return f"{s.agents[0].id}~{sid}"
+
+    def ledger_for(request: Request, response: Response) -> tuple[str, bool]:
+        """(ledger, simulate). Only the owner, in live mode, spends real money;
+        every visitor gets a private simulated sandbox with the same rules."""
+        if s.execution_mode == "live" and s.owner_token and is_owner(request):
+            return s.agents[0].id, False
+        return sandbox(request, response), True
+
+    def view_scope(request: Request, response: Response, ledger: str) -> str | None:
+        """Owner sees any ledger (None = all); a visitor only their sandbox."""
+        if s.owner_token and not is_owner(request):
+            return sandbox(request, response)
+        return ledger or None
+
+    def check_can_decide(request: Request, response: Response, payment_id: str) -> None:
+        if not s.owner_token or is_owner(request):
+            return
+        p = store.get_payment(payment_id)
+        if not p or p.get("ledger") != sandbox(request, response) or not p.get("simulated"):
+            raise HTTPException(401, "owner token required")
 
     # --- pages -----------------------------------------------------------------
     @app.get("/", include_in_schema=False)
@@ -122,7 +143,8 @@ def create_app(settings: Settings | None = None, store: Store | None = None, one
         req = PaymentRequest(amount_usd=body.amount_usd, chain=body.chain.lower(), address=body.address.strip(),
                              token=body.token, purpose=body.purpose, context=body.context,
                              meta={"idempotency_key": body.idempotency_key})
-        return public(await guard.submit(agent, req))
+        # the README's demo key is public: payments made with it never move real money
+        return public(await guard.submit(agent, req, simulate=agent.api_key == PUBLIC_DEMO_KEY))
 
     @app.get("/api/v1/payments/{payment_id}")
     async def get_payment(payment_id: str, agent: Agent = Depends(agent_auth)) -> dict[str, Any]:
@@ -132,40 +154,45 @@ def create_app(settings: Settings | None = None, store: Store | None = None, one
         return public(await guard.refresh(p))
 
     # --- owner ---------------------------------------------------------------------
-    @app.get("/api/owner/summary", dependencies=[Depends(owner_auth)])
-    def summary(ledger: str = "") -> dict[str, Any]:
+    @app.get("/api/owner/summary")
+    def summary(request: Request, response: Response, ledger: str = "") -> dict[str, Any]:
+        ledger = view_scope(request, response, ledger) or ""
         out = []
         for a in s.agents:
             key = ledger or a.id
             spent, n = store.spent_since(key, day_start(), COMMITTED, all_ledgers=not ledger)
             out.append({"id": a.id, "name": a.name, "ledger": key, "spent_today_usd": round(spent, 2), "payments_today": n,
                         "policy": asdict(a.policy), "allowlist": [asdict(p) for p in a.allowlist], "denylist": list(a.denylist)})
-        return {"agents": out, "audit": store.verify_audit(), "health": health()}
+        return {"agents": out, "audit": store.verify_audit(), "health": health(), "owner": is_owner(request)}
 
-    @app.get("/api/owner/payments", dependencies=[Depends(owner_auth)])
-    async def list_payments(status: str = "", ledger: str = "", limit: int = Query(default=50, le=200)) -> list[dict[str, Any]]:
-        items = store.list_payments(agent_id=ledger or None, status=status or None, limit=limit)
+    @app.get("/api/owner/payments")
+    async def list_payments(request: Request, response: Response, status: str = "", ledger: str = "",
+                            limit: int = Query(default=50, le=200)) -> list[dict[str, Any]]:
+        items = store.list_payments(agent_id=view_scope(request, response, ledger), status=status or None, limit=limit)
         for p in items:
             if p["status"] in ("executing", "pending_approval"):
                 await guard.refresh(p)
         return [public(p) for p in items]
 
-    @app.get("/api/owner/payments/{payment_id}", dependencies=[Depends(owner_auth)])
-    async def owner_payment(payment_id: str) -> dict[str, Any]:
+    @app.get("/api/owner/payments/{payment_id}")
+    async def owner_payment(payment_id: str, request: Request, response: Response) -> dict[str, Any]:
         p = store.get_payment(payment_id)
-        if not p:
+        scope = view_scope(request, response, "")
+        if not p or (scope and p.get("ledger") != scope):
             raise HTTPException(404, "payment not found")
         return public(await guard.refresh(p), audit=store.audit_log(payment_id))
 
-    @app.post("/api/owner/payments/{payment_id}/approve", dependencies=[Depends(owner_auth)])
-    async def approve(payment_id: str) -> dict[str, Any]:
+    @app.post("/api/owner/payments/{payment_id}/approve")
+    async def approve(payment_id: str, request: Request, response: Response) -> dict[str, Any]:
+        check_can_decide(request, response, payment_id)
         return public(await guard.approve(payment_id, "owner"))
 
-    @app.post("/api/owner/payments/{payment_id}/deny", dependencies=[Depends(owner_auth)])
-    async def deny(payment_id: str, body: Decision | None = None) -> dict[str, Any]:
+    @app.post("/api/owner/payments/{payment_id}/deny")
+    async def deny(payment_id: str, request: Request, response: Response, body: Decision | None = None) -> dict[str, Any]:
+        check_can_decide(request, response, payment_id)
         return public(await guard.deny(payment_id, "owner", body.reason if body else ""))
 
-    @app.get("/api/owner/audit", dependencies=[Depends(owner_auth)])
+    @app.get("/api/owner/audit")
     def audit(limit: int = Query(default=100, le=500)) -> dict[str, Any]:
         return {"verify": store.verify_audit(), "entries": store.audit_log(limit=limit)}
 
@@ -184,7 +211,7 @@ def create_app(settings: Settings | None = None, store: Store | None = None, one
     async def demo_submit(email: dict[str, str], call: dict[str, Any] | None, request: Request,
                           response: Response) -> tuple[dict[str, Any] | None, str]:
         agent = s.agents[0]
-        ledger, _ = ledger_for(agent, request, response)
+        ledger, simulate = ledger_for(request, response)
         if not call:
             return None, ledger
         try:
@@ -194,7 +221,7 @@ def create_app(settings: Settings | None = None, store: Store | None = None, one
             )
         except (KeyError, TypeError, ValueError):
             raise HTTPException(422, "the agent produced an unusable payment call")
-        return public(await guard.submit(agent, req, ledger=ledger)), ledger
+        return public(await guard.submit(agent, req, ledger=ledger, simulate=simulate)), ledger
 
     @app.post("/api/demo/agent")
     async def demo_agent(body: EmailIn) -> dict[str, Any]:

@@ -182,7 +182,9 @@ const ICON = {pass:"✓", hold:"❚❚", block:"✕"};
 const VERDICT = {allow:["ALLOWED","Within policy. Paying now."], hold:["HELD FOR A HUMAN","The owner decides."], block:["BLOCKED","This payment will never execute."]};
 
 async function api(path, body){
-  const r = await fetch(path, body ? {method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify(body)} : {});
+  let tok = ""; try{ tok = localStorage.getItem("guard_owner") || "" }catch(_){}
+  const headers = {"content-type":"application/json", "x-owner-token": tok};
+  const r = await fetch(path, body ? {method:"POST", headers, body:JSON.stringify(body)} : {headers});
   const j = await r.json().catch(() => ({}));
   if(!r.ok) throw new Error(j.detail || j.error || r.statusText);
   return j;
@@ -190,9 +192,10 @@ async function api(path, body){
 
 async function boot(){
   const h = await api("/api/health").catch(() => null);
+  if(h && h.execution === "live"){ const s = await api("/api/owner/summary").catch(() => null); h.you_spend_real = !!(s && s.owner && h.owner_token_required) }
   if(h){
     $("#pills").innerHTML = [
-      ["AI", h.llm], ["1Click", h.oneclick], ["settlement", h.execution === "live" ? "live NEAR" : "simulated"], ["db", h.storage]
+      ["AI", h.llm], ["1Click", h.oneclick], ["settlement", h.execution === "live" ? (h.you_spend_real ? "live NEAR (owner)" : "sandbox for visitors") : "simulated"], ["db", h.storage]
     ].map(([k,v]) => `<span class="pill ${/live|gemini/.test(v)?"live":""}">${k} <b>${esc(v)}</b></span>`).join("");
   }
   $("#curl").innerHTML = hl(`curl -X POST ${location.origin}/api/v1/payments \\

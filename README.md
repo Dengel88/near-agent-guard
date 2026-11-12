@@ -74,7 +74,7 @@ Copy `.env.example` to `.env`:
 | `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` | ping the owner when a payment is held |
 | `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` | shared libSQL DB, so serverless instances (Vercel) share one ledger |
 
-In simulated mode the public demo gives every visitor their own sandbox ledger (a cookie), so one visitor can't exhaust another's daily budget. In live mode all requests share the agent's real ledger.
+Every visitor of the public demo gets a private, simulated sandbox ledger (a cookie) with the same rules, so nobody can drain the treasury or exhaust someone else's budget. Real money moves only in `EXECUTION_MODE=live`, and only for the owner (signed in with `OWNER_TOKEN`) or for an agent whose key is not the public `demo-agent-key`.
 
 ## What is verified in code
 

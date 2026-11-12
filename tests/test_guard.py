@@ -110,10 +110,34 @@ def test_route_fee_ceiling(store, settings):
     assert p["status"] == "failed" and "too expensive" in p["execution"]["error"]
 
 
-def test_owner_token(store, oneclick):
+def test_live_mode_visitors_get_sandbox_owner_spends_real(store, oneclick):
     from fastapi.testclient import TestClient
+
     from app.main import create_app
-    s = load_settings(db_path=":memory:", owner_token="s3cret", turso_url="")
-    c = TestClient(create_app(settings=s, store=store, oneclick=oneclick, llm=None))
-    assert c.get("/api/owner/payments").status_code == 401
-    assert c.get("/api/owner/payments", headers={"x-owner-token": "s3cret"}).status_code == 200
+
+    sent = []
+
+    class FakeTreasury:
+        account_id = "treasury.near"
+
+        async def ft_transfer(self, contract, receiver, units, memo):
+            sent.append((receiver, units))
+            return {"tx_hash": "realtx", "explorer": ""}
+
+    s = load_settings(db_path=":memory:", owner_token="s3cret", turso_url="", execution_mode="live")
+    app = create_app(settings=s, store=store, oneclick=oneclick, llm=None, treasury=FakeTreasury())
+    visitor, owner = TestClient(app), TestClient(app, headers={"x-owner-token": "s3cret"})
+
+    v = visitor.post("/api/demo/run", json={"scenario_id": "invoice"}).json()["payment"]
+    assert v["status"] == "executed" and v["simulated"] and not sent
+
+    o = owner.post("/api/demo/run", json={"scenario_id": "invoice"}).json()["payment"]
+    assert o["status"] == "executed" and not o["simulated"] and sent == [("wanderlust.near", 1_000_000)]
+
+    held = owner.post("/api/demo/run", json={"scenario_id": "gpu"}).json()["payment"]
+    assert visitor.post(f"/api/owner/payments/{held['id']}/approve").status_code == 401
+    assert [p["id"] for p in visitor.get("/api/owner/payments").json()] == [v["id"]]
+    assert {p["id"] for p in owner.get("/api/owner/payments").json()} >= {v["id"], o["id"], held["id"]}
+
+    mine = visitor.post("/api/demo/run", json={"scenario_id": "gpu"}).json()["payment"]
+    assert visitor.post(f"/api/owner/payments/{mine['id']}/approve").json()["simulated"]
