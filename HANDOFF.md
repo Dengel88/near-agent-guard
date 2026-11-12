@@ -14,12 +14,15 @@ _Обновлено: 2026-11-12_
 - Проверено вживую из облака: Gemini gemini-3.8-flash (агент + скринер), 1Click live-котировки USDC NEAR → Base/Solana.
 - NEAR-подпись своя (pynacl + borsh), байт-в-байт совпадает с py-near-primitives. Живую отправку не проверяли: из облака нет доступа к NEAR RPC и нет ключа казны.
 
-## Нужно от Сэма
-- [ ] Vercel: импортировать репо как новый проект. Env: LLM_PROVIDER=gemini, GEMINI_API_KEY, ONECLICK_MODE=live, EXECUTION_MODE=mock (пока), TURSO_DATABASE_URL/TURSO_AUTH_TOKEN (можно новую базу в Turso).
-- [ ] Для живых выплат в видео: отдельный NEAR-аккаунт казны, ~$5 USDC + 0.1 NEAR, приватный ключ только в env Vercel (TREASURY_NEAR_ACCOUNT, TREASURY_PRIVATE_KEY, EXECUTION_MODE=live, OWNER_TOKEN латиницей).
+## Прод (12.11)
+- https://near-agent-guard.vercel.app — LIVE: Gemini, 1Click live, EXECUTION_MODE=live, Turso near-agent-guard-dengel88.
+- Казна implicit 575208d0…639fe999. Ключ и OWNER_TOKEN только в Vercel и у Сэма (D:\AI\NEAR\*.txt).
+- Посетители: симулированная песочница; реальные деньги — только владелец (/console → Owner sign-in).
+- Реальные tx: $1 → wanderlust.near 8wvphK68ZurtEKgfxDa3xqW1RQ8VYDKrHZWhmJgbphJK; $2 → Base через 1Click, депозит DMjVG3zZew7JBjzvP9SwP1QSywtorQERLeSJsBBSbnQg (1Click долго PROCESSING, дедлайн 02:41 UTC, иначе refund).
+- Видео: D:\AI\NEAR\agent_guard_live_cut_v2.mp4 (2:19, без звука), исходники в D:\AI\NEAR\recordings\.
 
 ## Дальше
-- [ ] Деплой, проверка на проде, скриншоты.
-- [ ] Реальная выплата $1 с казны (видео).
-- [ ] Видео-демо, пост в X (@NEARProtocol #NEARHackathon), форма до 14.11 23:59 UTC.
-- [ ] Идея-усиление: жёсткие лимиты on-chain (контракт или function-call key с allowance).
+- [ ] Кадр «paid» для Base (после SUCCESS) или честно оставить settling.
+- [ ] Озвучка/титры к видео, пост в X (@NEARProtocol #NEARHackathon), форма до 14.11 23:59 UTC.
+- [ ] В README AI-Штат Pay добавить ссылку на этот проект (правило про 2 проекта).
+- [ ] Идея-усиление: жёсткие лимиты on-chain.

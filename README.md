@@ -18,6 +18,10 @@ The agent never holds a key. It gets an API key that can only **ask** for a paym
 |---|---|---|
 | ![](docs/demo-blocked.png) | ![](docs/demo-held.png) | ![](docs/console.png) |
 
+**Live:** <https://near-agent-guard.vercel.app> (visitors get a private simulated sandbox; real money moves only for the owner).
+
+**Proof on NEAR mainnet:** the Guard's treasury paid an allowed $1 invoice, signed by the built-in signer: [8wvphK68…](https://nearblocks.io/txns/8wvphK68ZurtEKgfxDa3xqW1RQ8VYDKrHZWhmJgbphJK). An owner-approved $2 payout to Base went through NEAR Intents 1Click: treasury deposit [DMjVG3zZ…](https://nearblocks.io/txns/DMjVG3zZew7JBjzvP9SwP1QSywtorQERLeSJsBBSbnQg).
+
 ---
 
 ## Run it (60 seconds, no keys needed)
