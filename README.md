@@ -20,7 +20,7 @@ The agent never holds a key. It gets an API key that can only **ask** for a paym
 
 **Live:** <https://near-agent-guard.vercel.app> (visitors get a private simulated sandbox; real money moves only for the owner).
 
-**Proof on NEAR mainnet:** the Guard's treasury paid an allowed $1 invoice, signed by the built-in signer: [8wvphK68…](https://nearblocks.io/txns/8wvphK68ZurtEKgfxDa3xqW1RQ8VYDKrHZWhmJgbphJK). An owner-approved $2 payout to Base went through NEAR Intents 1Click: treasury deposit [DMjVG3zZ…](https://nearblocks.io/txns/DMjVG3zZew7JBjzvP9SwP1QSywtorQERLeSJsBBSbnQg).
+**Proof on NEAR mainnet:** the Guard's treasury paid an allowed $1 invoice, signed by the built-in signer: [8wvphK68…](https://nearblocks.io/txns/8wvphK68ZurtEKgfxDa3xqW1RQ8VYDKrHZWhmJgbphJK). An owner-approved $2 payout to Base went through NEAR Intents 1Click: treasury deposit [DMjVG3zZ…](https://nearblocks.io/txns/DMjVG3zZew7JBjzvP9SwP1QSywtorQERLeSJsBBSbnQg) → 2.0 USDC delivered on Base [0x39f9fa7d…](https://basescan.org/tx/0x39f9fa7d96912638e0c48a2e46fffcadf1b1c576d5f8c2606abe8ca57f0dde09) (the unused slippage buffer was refunded to the treasury).
 
 ---
 
