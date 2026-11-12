@@ -70,6 +70,17 @@ SCENARIOS: list[dict[str, str]] = [
 ]
 
 
+DEMO_ADDRESS = "0x7a3b1c9d2e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b"
+
+
+def scenarios_for(allowlist) -> list[dict[str, str]]:
+    """Scenario emails with the configured Cloudburst address (CLOUDBURST_ADDRESS)."""
+    cb = next((p for p in allowlist if p.name == "Cloudburst GPU"), None)
+    if not cb or cb.address == DEMO_ADDRESS:
+        return SCENARIOS
+    return [{**e, "body": e["body"].replace(DEMO_ADDRESS, cb.address)} if e["id"] == "gpu" else e for e in SCENARIOS]
+
+
 def email_text(email: dict[str, str]) -> str:
     return f"From: {email.get('from', '')}\nSubject: {email.get('subject', '')}\n\n{email.get('body', '')}"
 

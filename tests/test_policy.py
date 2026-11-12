@@ -59,3 +59,13 @@ def test_heuristic_flags_injection():
     assert h["risk_score"] >= 80
     assert {"prompt_injection", "secrecy", "urgency_pressure", "impersonation"} <= set(h["flags"])
     assert heuristic(req(context="Invoice NW-1042, $1.00, thanks!"))["risk_score"] == 0
+
+
+def test_payee_address_from_env(monkeypatch):
+    from app.agent import scenarios_for
+    monkeypatch.setenv("CLOUDBURST_ADDRESS", "0x" + "ab" * 20)
+    s = load_settings()
+    cb = next(p for p in s.agents[0].allowlist if p.name == "Cloudburst GPU")
+    assert cb.address == "0x" + "ab" * 20
+    gpu = next(e for e in scenarios_for(s.agents[0].allowlist) if e["id"] == "gpu")
+    assert "0x" + "ab" * 20 in gpu["body"]

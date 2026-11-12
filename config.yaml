@@ -35,7 +35,8 @@ agents:
       - name: Cloudburst GPU
         aliases: [cloudburst]
         chain: base
-        address: "0x7a3b1c9d2e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b"
+        # demo placeholder; set CLOUDBURST_ADDRESS (a Base address) to a wallet you own before approving it in live mode
+        address: "${CLOUDBURST_ADDRESS:-0x7a3b1c9d2e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b}"
         token: USDC
     denylist:
       - "0x000000000000000000000000000000000000dEaD"

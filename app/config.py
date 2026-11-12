@@ -103,6 +103,14 @@ class Settings:
         return next((a for a in self.agents if key and a.api_key == key), None)
 
 
+_VAR = re.compile(r"\$\{(\w+)(?::-([^}]*))?\}")
+
+
+def _expand(value: str) -> str:
+    """${NAME} or ${NAME:-default} in config.yaml values."""
+    return _VAR.sub(lambda m: _env(m.group(1), m.group(2) or ""), value)
+
+
 def _env(name: str, default: str) -> str:
     value = os.getenv(name)
     return value.strip().strip("\"'") if value not in (None, "") else default
@@ -121,7 +129,7 @@ def _agent(raw: dict[str, Any]) -> Agent:
         policy=Policy(**pol),
         allowlist=tuple(
             Payee(
-                name=p["name"], chain=p["chain"], address=str(p["address"]), token=p.get("token", "USDC"),
+                name=p["name"], chain=p["chain"], address=_expand(str(p["address"])), token=p.get("token", "USDC"),
                 aliases=tuple(a.lower() for a in p.get("aliases", [])) + (p["name"].lower(),),
             )
             for p in raw.get("allowlist") or []

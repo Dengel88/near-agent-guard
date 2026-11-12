@@ -18,7 +18,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Res
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
-from .agent import SCENARIOS, email_text, run_agent
+from .agent import email_text, run_agent, scenarios_for
 from .config import ROOT, Agent, Settings, get_settings
 from .guard import Guard, GuardError, Notifier
 from .llm import make_llm
@@ -171,10 +171,10 @@ def create_app(settings: Settings | None = None, store: Store | None = None, one
     # --- demo ------------------------------------------------------------------------
     @app.get("/api/demo/scenarios")
     def scenarios() -> list[dict[str, str]]:
-        return SCENARIOS
+        return scenarios_for(s.agents[0].allowlist)
 
     def demo_email(body: EmailIn) -> dict[str, str]:
-        email = next((dict(e) for e in SCENARIOS if e["id"] == body.scenario_id), None) or {
+        email = next((dict(e) for e in scenarios_for(s.agents[0].allowlist) if e["id"] == body.scenario_id), None) or {
             "from": body.sender or "unknown@example.com", "subject": body.subject, "body": body.body}
         if not (email.get("body") or "").strip():
             raise HTTPException(400, "empty email")
