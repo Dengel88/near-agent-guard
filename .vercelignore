@@ -1,0 +1,8 @@
+*.mp4
+*.mov
+*.mkv
+*.txt
+.venv/
+data/
+tests/
+docs/

@@ -5,3 +5,8 @@ __pycache__/
 data/*.db
 .pytest_cache/
 .vercel/
+*.mp4
+*.mov
+*.mkv
+*-BACKUP.txt
+*token*.txt
