@@ -81,8 +81,10 @@ def _clean(content: str | None) -> str | None:
 def make_llm(settings: Settings) -> ChatLLM | None:
     if settings.llm_provider == "mock":
         return None
+    # a missing key degrades to the offline screener instead of a dead deploy;
+    # /api/health then reports llm=mock so it is visible
     if settings.llm_provider == "gemini":
-        return ChatLLM(GEMINI_BASE_URL, settings.gemini_api_key, settings.gemini_model)
+        return ChatLLM(GEMINI_BASE_URL, settings.gemini_api_key, settings.gemini_model) if settings.gemini_api_key else None
     if settings.llm_provider == "openai":
-        return ChatLLM(settings.llm_base_url, settings.llm_api_key, settings.llm_model)
+        return ChatLLM(settings.llm_base_url, settings.llm_api_key, settings.llm_model) if settings.llm_api_key else None
     raise LLMError(f"Unknown LLM_PROVIDER: {settings.llm_provider}")

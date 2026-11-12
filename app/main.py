@@ -111,7 +111,8 @@ def create_app(settings: Settings | None = None, store: Store | None = None, one
     def health() -> dict[str, Any]:
         return {
             "ok": True, "storage": store.backend, "oneclick": oneclick.mode, "execution": s.execution_mode,
-            "llm": getattr(llm, "model", None) or "mock", "treasury": s.treasury_account,
+            "llm": getattr(llm, "model", None) or "mock",
+            "llm_warning": None if llm or s.llm_provider == "mock" else f"LLM_PROVIDER={s.llm_provider} but no API key; using the offline screener", "treasury": s.treasury_account,
             "treasury_key": bool(treasury), "owner_token_required": bool(s.owner_token),
         }
 
