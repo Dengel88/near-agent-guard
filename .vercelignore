@@ -1,8 +1,8 @@
 *.mp4
 *.mov
 *.mkv
-*.txt
+*-BACKUP.txt
+*token*.txt
 .venv/
 data/
 tests/
-docs/
