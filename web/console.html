@@ -139,6 +139,7 @@ function detail(p){
     ${p.ai ? `<div class="c" style="margin-top:6px"><span class="muted">AI</span><span>${esc(p.ai.summary)} <span class="chain">${esc((p.ai.flags||[]).join(", "))}</span></span></div>` : ""}
     ${tx ? `<div class="c"><span class="muted">tx</span><span class="mono">${tx}</span></div>` : ""}
     ${e.deposit_address ? `<div class="c"><span class="muted">1Click</span><span class="mono">${esc(e.deposit_address)} · ${esc(e.amount_in)} USDC in · ${esc(e.oneclick_status || "")}</span></div>` : ""}
+    ${e.destination_tx ? `<div class="c"><span class="muted">${esc(p.recipient.chain)} tx</span><span class="mono">${esc(e.destination_tx)}</span></div>` : ""}
     ${e.error ? `<div class="c c-block">${esc(e.error)}</div>` : ""}
     <div class="c"><span class="muted">context</span><span class="muted" style="white-space:pre-wrap">${esc(p.context_preview)}</span></div></div>`;
 }

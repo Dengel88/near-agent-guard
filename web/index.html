@@ -326,8 +326,12 @@ function renderExec(p){
   const rows = [["status", statusText(p)], ["route", e.route === "1click" ? `NEAR Intents 1Click → ${p.recipient.chain}` : "direct USDC transfer on NEAR"], ["from", e.from || "treasury"]];
   if(e.route === "1click"){ rows.push(["1Click deposit", short(e.deposit_address || "")], ["USDC in → out", `${e.amount_in} → ${e.amount_out}`]) }
   if(e.tx_hash) rows.push(["NEAR tx", e.simulated ? `${short(e.tx_hash)} (simulated)` : `<a href="https://nearblocks.io/txns/${esc(e.tx_hash)}" target="_blank">${esc(short(e.tx_hash))}</a>`]);
+  if(e.destination_tx){
+    const scan = {base:"https://basescan.org/tx/", arb:"https://arbiscan.io/tx/", eth:"https://etherscan.io/tx/", sol:"https://solscan.io/tx/"}[p.recipient.chain];
+    rows.push([p.recipient.chain + " tx", scan ? `<a href="${scan}${esc(e.destination_tx)}" target="_blank">${esc(short(e.destination_tx))}</a>` : esc(short(e.destination_tx))]);
+  }
   if(e.error) rows.push(["error", esc(e.error)]);
-  ex.innerHTML = `<div class="exec">${rows.map(([k,v]) => `<div class="row"><span>${k}</span><span>${k === "NEAR tx" || k === "status" ? v : esc(v)}</span></div>`).join("")}</div>`;
+  ex.innerHTML = `<div class="exec">${rows.map(([k,v]) => `<div class="row"><span>${k}</span><span>${/ tx$/.test(k) || k === "status" ? v : esc(v)}</span></div>`).join("")}</div>`;
   if(p.status === "executing" || p.status === "approved") pollT = setTimeout(async () => renderExec(await api("/api/demo/payments/" + p.id)), 2500);
 }
 
