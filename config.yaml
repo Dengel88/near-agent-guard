@@ -15,7 +15,7 @@ agents:
     policy:
       per_tx_limit_usd: 25        # hard cap per payment
       daily_limit_usd: 50         # hard cap per UTC day (executed + pending)
-      approval_above_usd: 5       # bigger payments wait for a human
+      approval_above_usd: 1.5     # bigger payments wait for a human
       max_tx_per_hour: 10
       allowed_chains: [near, base, arb, sol, eth]
       allowed_tokens: [USDC]

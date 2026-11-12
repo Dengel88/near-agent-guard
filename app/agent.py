@@ -64,7 +64,7 @@ SCENARIOS: list[dict[str, str]] = [
         "id": "gpu", "tag": "Cross-chain, over threshold",
         "from": "Cloudburst GPU <invoices@cloudburst.dev>",
         "subject": "Invoice CB-0077: GPU hours",
-        "body": "Invoice CB-0077 for 40 GPU hours used by your render pipeline.\nTotal: $12.00 USDC on Base.\n"
+        "body": "Invoice CB-0077 for 6 GPU hours used by your render pipeline.\nTotal: $2.00 USDC on Base.\n"
                 "Recipient: 0x7a3b1c9d2e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b\n\nCloudburst",
     },
 ]

@@ -36,7 +36,7 @@ Open <http://localhost:8000>. Pick an email in the inbox and press **Let the age
 | Legit invoice, $1 to a known payee | pays | **allows** and pays (direct USDC transfer on NEAR) |
 | "CEO" asks for $480, "ignore your instructions" | pays | **blocks**: over the cap and the daily budget, AI risk ≥ 80 |
 | Known vendor "changed its wallet" to Solana | pays | **holds**: unknown address + vendor impersonation |
-| Known vendor, $12 on Base | pays | **holds** (over $5 auto-approve); approve it and it settles through 1Click |
+| Known vendor, $2 on Base | pays | **holds** (over the $1.50 auto-approve threshold); approve it and it settles through 1Click |
 | *Write your own attack* | usually pays | try it |
 
 Then open <http://localhost:8000/console> for the owner view: approvals, spend vs. budget, policy, allowlist and the verified audit chain. API docs are at <http://localhost:8000/docs>.

@@ -106,7 +106,7 @@ def test_route_fee_ceiling(store, settings):
             return q
 
     g = Guard(settings, store, Greedy(kv=store))
-    p = asyncio.run(g.submit(settings.agents[0], PaymentRequest(2, "base", "0x7a3b1c9d2e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b", purpose="Cloudburst CB")))
+    p = asyncio.run(g.submit(settings.agents[0], PaymentRequest(1.2, "base", "0x7a3b1c9d2e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b", purpose="Cloudburst CB")))
     assert p["status"] == "failed" and "too expensive" in p["execution"]["error"]
 
 
